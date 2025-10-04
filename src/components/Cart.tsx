@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface CartItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   quantity: number;
@@ -16,8 +16,8 @@ interface CartProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
-  onUpdateQuantity: (id: number, quantity: number) => void;
-  onRemoveItem: (id: number) => void;
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemoveItem: (id: string) => void;
   onCheckout: () => void;
 }
 

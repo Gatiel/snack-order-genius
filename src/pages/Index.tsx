@@ -1,82 +1,60 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryFilter from "@/components/CategoryFilter";
 import ProductCard, { Product } from "@/components/ProductCard";
 import Cart, { CartItem } from "@/components/Cart";
+import { useCategories } from "@/hooks/useCategories";
+import { useItems } from "@/hooks/useItems";
 
 import burgerImg from "@/assets/burger.jpg";
 import pizzaImg from "@/assets/pizza.jpg";
 import drinkImg from "@/assets/drink.jpg";
 import friesImg from "@/assets/fries.jpg";
 
-const PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "X-Burger Clássico",
-    description: "Hambúrguer suculento com queijo, alface, tomate e molho especial",
-    price: 25.90,
-    image: burgerImg,
-    category: "Lanches",
-  },
-  {
-    id: 2,
-    name: "Pizza Margherita",
-    description: "Molho de tomate, mussarela, manjericão fresco e azeite",
-    price: 45.00,
-    image: pizzaImg,
-    category: "Pizzas",
-  },
-  {
-    id: 3,
-    name: "Refrigerante Gelado",
-    description: "Coca-Cola, Guaraná ou Sprite - 350ml",
-    price: 5.90,
-    image: drinkImg,
-    category: "Bebidas",
-  },
-  {
-    id: 4,
-    name: "Batata Frita Grande",
-    description: "Porção generosa de batatas crocantes com sal especial",
-    price: 15.00,
-    image: friesImg,
-    category: "Acompanhamentos",
-  },
-  {
-    id: 5,
-    name: "X-Bacon",
-    description: "Hambúrguer com bacon crocante, queijo e cebola caramelizada",
-    price: 29.90,
-    image: burgerImg,
-    category: "Lanches",
-  },
-  {
-    id: 6,
-    name: "Pizza Calabresa",
-    description: "Molho de tomate, mussarela, calabresa e cebola",
-    price: 48.00,
-    image: pizzaImg,
-    category: "Pizzas",
-  },
-];
-
-const CATEGORIES = Array.from(new Set(PRODUCTS.map(p => p.category)));
+// Mapeamento de imagens padrão por categoria
+const DEFAULT_IMAGES: Record<string, string> = {
+  'Lanches': burgerImg,
+  'Pizzas': pizzaImg,
+  'Bebidas': drinkImg,
+  'Acompanhamentos': friesImg,
+};
 
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProducts = PRODUCTS.filter((product) => {
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  const { data: categories = [], isLoading: loadingCategories } = useCategories();
+  const { data: items = [], isLoading: loadingItems } = useItems({
+    categoryId: selectedCategoryId,
+    searchQuery,
   });
+
+  // Mapear categorias para obter nomes
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach(cat => {
+      map[cat.id_categoria] = cat.nome_categoria;
+    });
+    return map;
+  }, [categories]);
+
+  // Transformar itens do banco em formato Product
+  const products: Product[] = useMemo(() => {
+    return items.map(item => ({
+      id: item.id_item,
+      name: item.nome_item,
+      description: item.descricao_item || '',
+      price: Number(item.preco),
+      image: item.imagem_url || DEFAULT_IMAGES[categoryMap[item.id_categoria]] || burgerImg,
+      category: categoryMap[item.id_categoria] || 'Outros',
+    }));
+  }, [items, categoryMap]);
+
+  const categoryNames = categories.map(cat => cat.nome_categoria);
 
   const handleAddToCart = (product: Product) => {
     setCartItems((prev) => {
@@ -94,7 +72,7 @@ const Index = () => {
     });
   };
 
-  const handleUpdateQuantity = (id: number, quantity: number) => {
+  const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity === 0) {
       handleRemoveItem(id);
       return;
@@ -104,7 +82,7 @@ const Index = () => {
     );
   };
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
     toast.success("Item removido do carrinho");
   };
@@ -114,6 +92,31 @@ const Index = () => {
     setCartItems([]);
     setIsCartOpen(false);
   };
+
+  const handleCategorySelect = (categoryName: string | null) => {
+    if (!categoryName) {
+      setSelectedCategoryId(null);
+      return;
+    }
+    
+    const category = categories.find(cat => cat.nome_categoria === categoryName);
+    setSelectedCategoryId(category?.id_categoria || null);
+  };
+
+  const selectedCategoryName = selectedCategoryId 
+    ? categoryMap[selectedCategoryId] 
+    : null;
+
+  if (loadingCategories || loadingItems) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,23 +128,23 @@ const Index = () => {
       <Hero onSearch={setSearchQuery} />
       
       <CategoryFilter
-        categories={CATEGORIES}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
+        categories={categoryNames}
+        selectedCategory={selectedCategoryName}
+        onSelectCategory={handleCategorySelect}
       />
 
       <main className="container px-4 pb-12">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground">
-            {selectedCategory || "Todos os produtos"}
+            {selectedCategoryName || "Todos os produtos"}
           </h2>
           <p className="text-muted-foreground">
-            {filteredProducts.length} {filteredProducts.length === 1 ? "produto" : "produtos"} encontrado{filteredProducts.length === 1 ? "" : "s"}
+            {products.length} {products.length === 1 ? "produto" : "produtos"} encontrado{products.length === 1 ? "" : "s"}
           </p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -150,7 +153,7 @@ const Index = () => {
           ))}
         </div>
 
-        {filteredProducts.length === 0 && (
+        {products.length === 0 && (
           <div className="py-12 text-center">
             <p className="text-muted-foreground">Nenhum produto encontrado</p>
           </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;

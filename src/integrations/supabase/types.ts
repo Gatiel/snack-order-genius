@@ -14,7 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorias: {
+        Row: {
+          created_at: string
+          descricao_categoria: string | null
+          id_categoria: string
+          nome_categoria: string
+          status: Database["public"]["Enums"]["status_tipo"]
+        }
+        Insert: {
+          created_at?: string
+          descricao_categoria?: string | null
+          id_categoria?: string
+          nome_categoria: string
+          status?: Database["public"]["Enums"]["status_tipo"]
+        }
+        Update: {
+          created_at?: string
+          descricao_categoria?: string | null
+          id_categoria?: string
+          nome_categoria?: string
+          status?: Database["public"]["Enums"]["status_tipo"]
+        }
+        Relationships: []
+      }
+      itens: {
+        Row: {
+          data_cadastro: string
+          descricao_item: string | null
+          id_categoria: string
+          id_item: string
+          imagem_url: string | null
+          nome_item: string
+          preco: number
+          status: Database["public"]["Enums"]["status_tipo"]
+        }
+        Insert: {
+          data_cadastro?: string
+          descricao_item?: string | null
+          id_categoria: string
+          id_item?: string
+          imagem_url?: string | null
+          nome_item: string
+          preco: number
+          status?: Database["public"]["Enums"]["status_tipo"]
+        }
+        Update: {
+          data_cadastro?: string
+          descricao_item?: string | null
+          id_categoria?: string
+          id_item?: string
+          imagem_url?: string | null
+          nome_item?: string
+          preco?: number
+          status?: Database["public"]["Enums"]["status_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itens_id_categoria_fkey"
+            columns: ["id_categoria"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id_categoria"]
+          },
+        ]
+      }
+      usuarios: {
+        Row: {
+          data_cadastro: string
+          email: string
+          id_usuario: string
+          nome: string
+          papel: Database["public"]["Enums"]["papel_usuario"]
+          status: Database["public"]["Enums"]["status_tipo"]
+          telefone: string | null
+        }
+        Insert: {
+          data_cadastro?: string
+          email: string
+          id_usuario: string
+          nome: string
+          papel?: Database["public"]["Enums"]["papel_usuario"]
+          status?: Database["public"]["Enums"]["status_tipo"]
+          telefone?: string | null
+        }
+        Update: {
+          data_cadastro?: string
+          email?: string
+          id_usuario?: string
+          nome?: string
+          papel?: Database["public"]["Enums"]["papel_usuario"]
+          status?: Database["public"]["Enums"]["status_tipo"]
+          telefone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +117,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      papel_usuario: "admin" | "usuario"
+      status_tipo: "ativo" | "inativo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +245,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      papel_usuario: ["admin", "usuario"],
+      status_tipo: ["ativo", "inativo"],
+    },
   },
 } as const
