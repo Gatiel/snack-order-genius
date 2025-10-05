@@ -1,6 +1,16 @@
-import { ShoppingCart, Search } from "lucide-react";
+import { ShoppingCart, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   cartItemsCount: number;
@@ -8,6 +18,17 @@ interface HeaderProps {
 }
 
 const Header = ({ cartItemsCount, onCartClick }: HeaderProps) => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthClick = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate("/auth");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
@@ -18,22 +39,46 @@ const Header = ({ cartItemsCount, onCartClick }: HeaderProps) => {
           <h1 className="text-xl font-bold text-foreground">LancheRápido</h1>
         </div>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          onClick={onCartClick}
-        >
-          <ShoppingCart className="h-5 w-5" />
-          {cartItemsCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-            >
-              {cartItemsCount}
-            </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={onCartClick}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemsCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+              >
+                {cartItemsCount}
+              </Badge>
+            )}
+          </Button>
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" onClick={handleAuthClick}>
+              Entrar
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
     </header>
   );
