@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryFilter from "@/components/CategoryFilter";
@@ -7,6 +8,9 @@ import ProductCard, { Product } from "@/components/ProductCard";
 import Cart, { CartItem } from "@/components/Cart";
 import { useCategories } from "@/hooks/useCategories";
 import { useItems } from "@/hooks/useItems";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
 
 import burgerImg from "@/assets/burger.jpg";
 import pizzaImg from "@/assets/pizza.jpg";
@@ -22,6 +26,8 @@ const DEFAULT_IMAGES: Record<string, string> = {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { isAdmin, isGerente } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -126,6 +132,19 @@ const Index = () => {
       />
       
       <Hero onSearch={setSearchQuery} />
+      
+      {(isAdmin() || isGerente()) && (
+        <div className="container px-4 py-4">
+          <Button
+            onClick={() => navigate("/admin")}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            Acessar Painel Administrativo
+          </Button>
+        </div>
+      )}
       
       <CategoryFilter
         categories={categoryNames}
